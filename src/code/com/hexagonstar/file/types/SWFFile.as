@@ -28,8 +28,10 @@
 package com.hexagonstar.file.types
 {
 	import com.hexagonstar.constants.Status;
+	import com.hexagonstar.exception.IllegalOperationException;
 	import com.hexagonstar.util.env.isAIRApplication;
 
+	import flash.display.AVM1Movie;
 	import flash.display.Loader;
 	import flash.display.MovieClip;
 	import flash.events.Event;
@@ -154,8 +156,30 @@ package com.hexagonstar.file.types
 		 */
 		public function get contentAsMovieClip():MovieClip
 		{
-			if (_loader) return MovieClip(_loader.content);
-			return null;
+			if (!_loader) return null;
+			if (_loader.content is AVM1Movie)
+			{
+				throw new IllegalOperationException("The loaded content is an AVM1Movie. Use the"
+					+ " contentAsAVM1 accessor instead.");
+				return null;
+			}
+			return MovieClip(_loader.content);
+		}
+		
+		
+		/**
+		 * The SWFFile content, as a AVM1Movie.
+		 */
+		public function get contentAsAVM1():AVM1Movie
+		{
+			if (!_loader) return null;
+			if (_loader.content is MovieClip)
+			{
+				throw new IllegalOperationException("The loaded content is a MovieClip. Use the"
+					+ " contentAsMovieClip accessor instead.");
+				return null;
+			}
+			return AVM1Movie(_loader.content);
 		}
 		
 		
@@ -165,6 +189,16 @@ package com.hexagonstar.file.types
 		public function get loader():Loader
 		{
 			return _loader;
+		}
+		
+		
+		/**
+		 * Determines whether loaded SWF content is AVM1 content or not.
+		 */
+		public function get isAVM1():Boolean
+		{
+			if (_loader && _loader.content is AVM1Movie) return true;
+			return false;
 		}
 		
 		
