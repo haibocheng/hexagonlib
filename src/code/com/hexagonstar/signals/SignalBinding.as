@@ -95,11 +95,11 @@ package com.hexagonstar.signals
 				// Should there be any checking on the params against the listener?
 				valueObjects = valueObjects.concat(_params);
 			}
-
+			
 			if (_strict)
 			{
 				// Dispatch as normal
-				const numValueObjects:int = valueObjects.length;
+				var numValueObjects:uint = valueObjects.length;
 				if (numValueObjects == 0)
 				{
 					_listener();

@@ -122,8 +122,8 @@ package com.hexagonstar.signals
 			var vc:Class;
 			
 			/* If valueClasses is empty, value objects are not type-checked. */
-			const numVC:uint = _valueClasses.length;
-			const numVO:uint = valueObjects.length;
+			var numVC:uint = _valueClasses.length;
+			var numVO:uint = valueObjects.length;
 			
 			if (numVO < numVC)
 			{
@@ -223,7 +223,7 @@ package com.hexagonstar.signals
 		{
 			if (isRegistrationPossible(listener, once))
 			{
-				const newBinding:ISignalBinding = new SignalBinding(listener, this, once);
+				var newBinding:ISignalBinding = new SignalBinding(listener, this, once);
 				_bindings = _bindings.prepend(newBinding);
 				return newBinding;
 			}
@@ -237,7 +237,7 @@ package com.hexagonstar.signals
 		protected function isRegistrationPossible(listener:Function, once:Boolean):Boolean
 		{
 			if (!_bindings.nonEmpty) return true;
-			const existingBinding:ISignalBinding = _bindings.find(listener);
+			var existingBinding:ISignalBinding = _bindings.find(listener);
 			if (!existingBinding) return true;
 			if (existingBinding.once != once)
 			{
