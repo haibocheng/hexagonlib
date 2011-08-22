@@ -45,6 +45,10 @@ package com.hexagonstar.display.bitmap
 		public var bitmapData:BitmapData;
 		public var matrix:Matrix;
 		
+		public var repeatFill:Boolean;
+		public var x:int;
+		public var y:int;
+		
 		protected var _scrollSpeedH:Number;
 		protected var _scrollSpeedV:Number;
 		protected var _rotation:Number;
@@ -64,26 +68,34 @@ package com.hexagonstar.display.bitmap
 		 * @param image
 		 * @param scrollSpeedH
 		 * @param scrollSpeedV
+		 * @param x
+		 * @param y
 		 * @param rotation
 		 * @param intervalRotation
 		 * @param scale
 		 * @param intervalScale
+		 * @param repeatFill
 		 * @param transparent
 		 * @param fillColor
 		 */
 		public function BGScrollLayer(image:IBitmapDrawable, scrollSpeedH:Number = 1.0,
-			scrollSpeedV:Number = 1.0, scale:Number = 1.0, intervalScale:Number = 0.0,
-			rotation:Number = 0.0, intervalRotation:Number = 0.0, transparent:Boolean = true,
-			fillColor:uint = 0x00000000)
+			scrollSpeedV:Number = 1.0, x:int = 0, y:int = 0, scale:Number = 1.0, intervalScale:Number = 0.0,
+			rotation:Number = 0.0, intervalRotation:Number = 0.0, repeatFill:Boolean = false,
+			transparent:Boolean = true, fillColor:uint = 0x00000000)
 		{
 			matrix = new Matrix();
 			
 			this.scrollSpeedH = scrollSpeedH;
 			this.scrollSpeedV = scrollSpeedV;
+			this.x = x;
+			this.y = y;
 			this.scale = scale;
 			this.intervalScale = intervalScale;
 			this.rotation = rotation;
 			this.intervalRotation = intervalRotation;
+			this.repeatFill = repeatFill;
+			
+			matrix.translate(x, y);
 			
 			var w:int;
 			var h:int;
@@ -91,6 +103,7 @@ package com.hexagonstar.display.bitmap
 			{
 				w = BitmapData(image).width;
 				h = BitmapData(image).height;
+				if (image is PatternBitmap) repeatFill = true;
 			}
 			else
 			{

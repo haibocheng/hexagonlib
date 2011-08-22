@@ -30,7 +30,7 @@ package com.hexagonstar.display.bitmap
 	import flash.display.BitmapData;
 	
 	
-	public class BitmapPattern extends BitmapData
+	public class PatternBitmap extends BitmapData
 	{
 		//-----------------------------------------------------------------------------------------
 		// Properties
@@ -67,7 +67,7 @@ package com.hexagonstar.display.bitmap
 		 * @param transparent
 		 * @param fillColor
 		 */
-		public function BitmapPattern(pattern:Array = null, colors:Array = null,
+		public function PatternBitmap(pattern:Array = null, colors:Array = null,
 			transparent:Boolean = false, fillColor:uint = 0x000000)
 		{
 			if (pattern && pattern[0] is Array) _pattern = pattern;

@@ -164,8 +164,9 @@ package com.hexagonstar.display.bitmap
 			{
 				var layer:BGScrollLayer = _layers[i];
 				layer.tick();
-				_shape.graphics.beginBitmapFill(layer.bitmapData, layer.matrix);
-				_shape.graphics.drawRect(0, 0, width, height);
+				_shape.graphics.beginBitmapFill(layer.bitmapData, layer.matrix, true, false);
+				if (!layer.repeatFill) _shape.graphics.drawRect(layer.x, layer.y, layer.bitmapData.width, layer.bitmapData.height);
+				else _shape.graphics.drawRect(0, 0, width, height);
 				_shape.graphics.endFill();
 			}
 			

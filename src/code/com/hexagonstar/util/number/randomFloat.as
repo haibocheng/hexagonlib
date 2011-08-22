@@ -41,7 +41,7 @@ package com.hexagonstar.util.number
 	public function randomFloat(min:Number = 0, max:Number = Number.MAX_VALUE):Number
 	{
 		if (min == max) return min;
-		else if (min < max) return min + (Math.random() * (max - min + 1));
-		else return max + (Math.random() * (min - max + 1));
+		else if (min < max) return Math.random() * (max - min) + min;
+		else return Math.random() * (min - max) + max;
 	}
 }
