@@ -103,7 +103,7 @@ package com.hexagonstar.display.bitmap
 			{
 				w = BitmapData(image).width;
 				h = BitmapData(image).height;
-				if (image is PatternBitmap) repeatFill = true;
+				if (image is PatternBitmap) this.repeatFill = true;
 			}
 			else
 			{
