@@ -28,6 +28,8 @@
 package com.hexagonstar.util.json
 {
 	import com.hexagonstar.util.debug.HLog;
+	
+	
 	public class JSONDecoder
 	{
 		//-----------------------------------------------------------------------------------------

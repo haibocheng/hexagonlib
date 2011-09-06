@@ -39,7 +39,7 @@ package com.hexagonstar.util.json
 	 *		var myObject:Object = JSON.decode( jsonString );
 	 *	</code>
 	 */
-	public class JSON
+	public class LegacyJSON
 	{
 		// -----------------------------------------------------------------------------------------
 		// Public Methods
