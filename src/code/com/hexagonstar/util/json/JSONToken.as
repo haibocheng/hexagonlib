@@ -29,61 +29,47 @@ package com.hexagonstar.util.json
 {
 	public final class JSONToken
 	{
-		// -----------------------------------------------------------------------------------------
-		// Properties
-		// -----------------------------------------------------------------------------------------
-		
 		/**
 		 * The type of the token.
-		 * @private
 		 */
-		internal var type:int;
-		
+		public var type:int;
 		/**
 		 * The value of the token
-		 * @private
 		 */
-		internal var value:Object;
-		
-		/**
-		 * Reusable token instance.
-		 * @private
-		 */
-		internal static const token:JSONToken = new JSONToken();
-		
-		
-		// -----------------------------------------------------------------------------------------
-		// Constructor
-		// -----------------------------------------------------------------------------------------
-		
+		public var value:Object;
+
+
 		/**
 		 * Creates a new JSONToken with a specific token type and value.
 		 *
 		 * @param type The JSONTokenType of the token
 		 * @param value The value of the token
 		 */
-		public function JSONToken(type:int = -1, value:Object = null)
+		public function JSONToken(type:int = -1 /* JSONTokenType.UNKNOWN */, value:Object = null)
 		{
 			this.type = type;
 			this.value = value;
 		}
-		
-		
-		// -----------------------------------------------------------------------------------------
-		// Private Methods
-		// -----------------------------------------------------------------------------------------
-		
+
+
 		/**
-		 * Factory method to create instances. Because we don't need more than one instance
+		 * Reusable token instance.
+		 * 
+		 * @see #create()
+		 */
+		internal static const token:JSONToken = new JSONToken();
+
+
+		/**
+		 * Factory method to create instances.  Because we don't need more than one instance
 		 * of a token at a time, we can always use the same instance to improve performance
 		 * and reduce memory consumption during decoding.
-		 * 
-		 * @private
 		 */
-		internal static function create(type:int = -1, value:Object = null):JSONToken
+		internal static function create(type:int = -1 /* JSONTokenType.UNKNOWN */, value:Object = null):JSONToken
 		{
 			token.type = type;
 			token.value = value;
+
 			return token;
 		}
 	}

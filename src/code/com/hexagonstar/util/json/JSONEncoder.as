@@ -29,84 +29,77 @@ package com.hexagonstar.util.json
 {
 	import flash.utils.describeType;
 
+
 	public class JSONEncoder
 	{
-		// -----------------------------------------------------------------------------------------
-		// Properties
-		// -----------------------------------------------------------------------------------------
-		/**
-		 * The string that is going to represent the object we're encoding.
-		 * @private
-		 */
-		private var _string:String;
+		/** The string that is going to represent the object we're encoding */
+		private var jsonString:String;
 
 
-		// -----------------------------------------------------------------------------------------
-		// Constructor
-		// -----------------------------------------------------------------------------------------
 		/**
-		 * Creates a new instance of the class.
-		 * 
-		 * @param object The object to encode as a JSON string.
+		 * Creates a new JSONEncoder.
+		 *
+		 * @param o The object to encode as a JSON string
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
-		public function JSONEncoder(object:*)
+		public function JSONEncoder(value:*)
 		{
-			_string = convertToString(object);
+			jsonString = convertToString(value);
 		}
 
 
-		// -----------------------------------------------------------------------------------------
-		// Getters & Setters
-		// -----------------------------------------------------------------------------------------
 		/**
 		 * Gets the JSON string from the encoder.
 		 *
-		 * @return The JSON string representation of the object that was passed to the
-		 *         constructor.
+		 * @return The JSON string representation of the object
+		 * 		that was passed to the constructor
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
-		public function get string():String
+		public function getString():String
 		{
-			return _string;
+			return jsonString;
 		}
 
 
-		// -----------------------------------------------------------------------------------------
-		// Private Methods
-		// -----------------------------------------------------------------------------------------
 		/**
 		 * Converts a value to it's JSON string equivalent.
-		 * 
-		 * @private
-		 * @param v The value to convert. Could be any type (object, number, array, etc).
+		 *
+		 * @param value The value to convert.  Could be any
+		 *		type (object, number, array, etc)
 		 */
-		private function convertToString(v:*):String
+		private function convertToString(value:*):String
 		{
-			/* determine what value is and convert it based on it's type. */
-			if (v is String)
+			// determine what value is and convert it based on it's type
+			if ( value is String )
 			{
-				/* escape the string so it's formatted correctly. */
-				return escapeString(v as String);
+				// escape the string so it's formatted correctly
+				return escapeString(value as String);
 			}
-			else if (v is Number)
+			else if ( value is Number )
 			{
-				/* only encode numbers that finate */
-				return isFinite(v as Number) ? Number(v).toString() : "null";
+				// only encode numbers that finate
+				return isFinite(value as Number) ? Number(value).toString() : "null";
 			}
-			else if (v is Boolean)
+			else if ( value is Boolean )
 			{
-				/* convert boolean to string easily */
-				return v ? "true" : "false";
+				// convert boolean to string easily
+				return value ? "true" : "false";
 			}
-			else if (v is Array)
+			else if ( value is Array )
 			{
-				/* call the helper method to convert an array */
-				return arrayToString(v);
+				// call the helper method to convert an array
+				return arrayToString(value as Array);
 			}
-			else if (v is Object && v != null)
+			else if ( value is Object && value != null )
 			{
-				/* call the helper method to convert an object */
-				return objectToString(v);
+				// call the helper method to convert an object
+				return objectToString(value);
 			}
+
 			return "null";
 		}
 
@@ -114,25 +107,24 @@ package com.hexagonstar.util.json
 		/**
 		 * Escapes a string accoding to the JSON specification.
 		 *
-		 * @private
-		 * @param str The string to be escaped.
-		 * @return The string with escaped special characters according to the JSON
-		 *         specification.
+		 * @param str The string to be escaped
+		 * @return The string with escaped special characters
+		 * 		according to the JSON specification
 		 */
-		private function escapeString(string:String):String
+		private function escapeString(str:String):String
 		{
 			// create a string to store the string's jsonstring value
 			var s:String = "";
 			// current character in the string we're processing
 			var ch:String;
 			// store the length in a local variable to reduce lookups
-			var len:Number = string.length;
+			var len:Number = str.length;
 
 			// loop over all of the characters in the string
 			for ( var i:int = 0; i < len; i++ )
 			{
 				// examine the character to determine if we have to escape it
-				ch = string.charAt(i);
+				ch = str.charAt(i);
 				switch ( ch )
 				{
 					case '"':
@@ -199,7 +191,6 @@ package com.hexagonstar.util.json
 		/**
 		 * Converts an array to it's JSON string equivalent
 		 *
-		 * @private
 		 * @param a The array to convert
 		 * @return The JSON string representation of <code>a</code>
 		 */
@@ -265,18 +256,21 @@ package com.hexagonstar.util.json
 				// as a variable so we don't have to keep looking up o[key]
 				// when testing for valid values to convert
 				var value:Object;
+
 				// loop over the keys in the object and add their converted
 				// values to the string
 				for ( var key:String in o )
 				{
 					// assign value to a variable for quick lookup
 					value = o[ key ];
+
 					// don't add function's to the JSON string
 					if ( value is Function )
 					{
 						// skip this key and try another
 						continue;
 					}
+
 					// when the length is 0 we're adding the first item so
 					// no comma is necessary
 					if ( s.length > 0 )
@@ -284,32 +278,34 @@ package com.hexagonstar.util.json
 						// we've already added an item, so add the comma separator
 						s += ",";
 					}
+
 					s += escapeString(key) + ":" + convertToString(value);
 				}
 			}
-			// o is a class instance
-			else
+			else // o is a class instance
 			{
 				// Loop over all of the variables and accessors in the class and
 				// serialize them along with their values.
-				for each (var v:XML in classInfo..*.(name() == "variable"
-					|| (name() == "accessor" && String(attribute("access")).charAt(0) == "r")))
+				for each (var v:XML in classInfo..*.(name() == "variable" || (name() == "accessor" && String(attribute("access")).charAt(0) == "r")))
 				{
 					// Issue #110 - If [Transient] metadata exists, then we should skip
-					if (v.metadata && v.metadata.( @name == "Transient" ).length() > 0)
+					if ( v.metadata && v.metadata.( @name == "Transient" ).length() > 0 )
 					{
 						continue;
 					}
+
 					// When the length is 0 we're adding the first item so
 					// no comma is necessary
-					if (s.length > 0)
+					if ( s.length > 0 )
 					{
 						// We've already added an item, so add the comma separator
 						s += ",";
 					}
+
 					s += escapeString(XMLList(v.@name).toString()) + ":" + convertToString(o[ v.@name ]);
 				}
 			}
+
 			return "{" + s + "}";
 		}
 	}

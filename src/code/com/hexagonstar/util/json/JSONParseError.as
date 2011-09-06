@@ -29,33 +29,19 @@ package com.hexagonstar.util.json
 {
 	public class JSONParseError extends Error
 	{
-		//-----------------------------------------------------------------------------------------
-		// Properties
-		//-----------------------------------------------------------------------------------------
-		
-		/**
-		 * The location in the string where the error occurred.
-		 * @private
-		 */
+		/** The location in the string where the error occurred */
 		private var _location:int;
-		
-		/**
-		 * The string in which the parse error occurred.
-		 * @private
-		 */
+		/** The string in which the parse error occurred */
 		private var _text:String;
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Constructor
-		//-----------------------------------------------------------------------------------------
-		
+
+
 		/**
 		 * Constructs a new JSONParseError.
 		 *
-		 * @param message The error message that occured during parsing.
-		 * @param location
-		 * @param text
+		 * @param message The error message that occured during parsing
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
 		public function JSONParseError(message:String = "", location:int = 0, text:String = "")
 		{
@@ -64,27 +50,29 @@ package com.hexagonstar.util.json
 			_location = location;
 			_text = text;
 		}
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Getters & Setters
-		//-----------------------------------------------------------------------------------------
-		
+
+
 		/**
 		 * Provides read-only access to the location variable.
 		 *
-		 * @return The location in the string where the error occurred.
+		 * @return The location in the string where the error occurred
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
 		public function get location():int
 		{
 			return _location;
 		}
-		
-		
+
+
 		/**
 		 * Provides read-only access to the text variable.
 		 *
-		 * @return The string in which the error occurred.
+		 * @return The string in which the error occurred
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
 		public function get text():String
 		{

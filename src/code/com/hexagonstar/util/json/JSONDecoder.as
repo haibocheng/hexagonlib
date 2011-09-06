@@ -27,197 +27,166 @@
  */
 package com.hexagonstar.util.json
 {
-	import com.hexagonstar.util.debug.HLog;
-	
-	
 	public class JSONDecoder
 	{
-		//-----------------------------------------------------------------------------------------
-		// Properties
-		//-----------------------------------------------------------------------------------------
-		
 		/**
 		 * Flag indicating if the parser should be strict about the format
 		 * of the JSON string it is attempting to decode.
-		 * @private
 		 */
-		private var _strict:Boolean;
-		
+		private var strict:Boolean;
+		/** The value that will get parsed from the JSON string */
+		private var value:*;
+		/** The tokenizer designated to read the JSON string */
+		private var tokenizer:JSONTokenizer;
+		/** The current token from the tokenizer */
+		private var token:JSONToken;
+
+
 		/**
-		 * The value that will get parsed from the JSON string.
-		 * @private
-		 */
-		private var _object:*;
-		
-		/**
-		 * The tokenizer designated to read the JSON string.
-		 * @private
-		 */
-		private var _tokenizer:JSONTokenizer;
-		
-		/**
-		 * The current token from the tokenizer.
-		 * @private
-		 */
-		private var _token:JSONToken;
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Constructor
-		//-----------------------------------------------------------------------------------------
-		
-		/**
-		 * Constructs a new JSONDecoder to parse a JSON string into a native object.
-		 * 
-		 * @param s The JSON string to be converted into a native object.
-		 * @param strict Flag indicating if the JSON string needs to strictly match the
-		 *        JSON standard or not.
+		 * Constructs a new JSONDecoder to parse a JSON string
+		 * into a native object.
+		 *
+		 * @param s The JSON string to be converted
+		 *		into a native object
+		 * @param strict Flag indicating if the JSON string needs to
+		 * 		strictly match the JSON standard or not.
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
 		public function JSONDecoder(s:String, strict:Boolean)
 		{
-			_strict = strict;
-			_tokenizer = new JSONTokenizer(s, strict);
-			
+			this.strict = strict;
+			tokenizer = new JSONTokenizer(s, strict);
+
 			nextToken();
-			_object = parseValue();
-			
-			/* Make sure the input stream is empty. */
-			if (strict && nextToken() != null)
+			value = parseValue();
+
+			// Make sure the input stream is empty
+			if ( strict && nextToken() != null )
 			{
-				_tokenizer.parseError("Unexpected characters left in input stream.");
+				tokenizer.parseError("Unexpected characters left in input stream");
 			}
 		}
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Getters & Setters
-		//-----------------------------------------------------------------------------------------
-		
+
+
 		/**
-		 * Gets the internal object that was created by parsing the JSON string passed to
-		 * the constructor.
+		 * Gets the internal object that was created by parsing
+		 * the JSON string passed to the constructor.
 		 *
-		 * @return The internal object representation of the JSON string that was passed
-		 *         to the constructor.
+		 * @return The internal object representation of the JSON
+		 * 		string that was passed to the constructor
+		 * @langversion ActionScript 3.0
+		 * @playerversion Flash 9.0
+		 * @tiptext
 		 */
-		public function get object():*
+		public function getValue():*
 		{
-			return _object;
+			return value;
 		}
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Private Methods
-		//-----------------------------------------------------------------------------------------
-		
+
+
 		/**
-		 * Returns the next token from the tokenzier reading the JSON string.
-		 * 
-		 * @private
+		 * Returns the next token from the tokenzier reading
+		 * the JSON string
 		 */
 		private final function nextToken():JSONToken
 		{
-			return _token = _tokenizer.getNextToken();
+			return token = tokenizer.getNextToken();
 		}
-		
-		
+
+
 		/**
-		 * Returns the next token from the tokenizer reading the JSON string and verifies
-		 * that the token is valid.
-		 * 
-		 * @private
+		 * Returns the next token from the tokenizer reading
+		 * the JSON string and verifies that the token is valid.
 		 */
 		private final function nextValidToken():JSONToken
 		{
-			_token = _tokenizer.getNextToken();
+			token = tokenizer.getNextToken();
 			checkValidToken();
-			return _token;
+
+			return token;
 		}
-		
-		
+
+
 		/**
 		 * Verifies that the token is valid.
-		 * 
-		 * @private
 		 */
 		private final function checkValidToken():void
 		{
-			/* Catch errors when the input stream ends abruptly. */
-			if (_token == null)
+			// Catch errors when the input stream ends abruptly
+			if ( token == null )
 			{
-				_tokenizer.parseError("Unexpected end of input.");
+				tokenizer.parseError("Unexpected end of input");
 			}
 		}
-		
-		
+
+
 		/**
 		 * Attempt to parse an array.
-		 * 
-		 * @private
 		 */
 		private final function parseArray():Array
 		{
 			// create an array internally that we're going to attempt
 			// to parse from the tokenizer
 			var a:Array = new Array();
-			
+
 			// grab the next token from the tokenizer to move
 			// past the opening [
 			nextValidToken();
-			
+
 			// check to see if we have an empty array
-			if ( _token.type == JSONTokenType.RIGHT_BRACKET )
+			if ( token.type == JSONTokenType.RIGHT_BRACKET )
 			{
 				// we're done reading the array, so return it
 				return a;
 			}
-			
 			// in non-strict mode an empty array is also a comma
 			// followed by a right bracket
-			else if ( !_strict && _token.type == JSONTokenType.COMMA )
+			else if ( !strict && token.type == JSONTokenType.COMMA )
 			{
 				// move past the comma
 				nextValidToken();
 
 				// check to see if we're reached the end of the array
-				if ( _token.type == JSONTokenType.RIGHT_BRACKET )
+				if ( token.type == JSONTokenType.RIGHT_BRACKET )
 				{
 					return a;
 				}
 				else
 				{
-					_tokenizer.parseError("Leading commas are not supported. Expecting ']' but found " + _token.value);
+					tokenizer.parseError("Leading commas are not supported.  Expecting ']' but found " + token.value);
 				}
 			}
-			
+
 			// deal with elements of the array, and use an "infinite"
 			// loop because we could have any amount of elements
-			while (true)
+			while ( true )
 			{
 				// read in the value and add it to the array
 				a.push(parseValue());
-				
+
 				// after the value there should be a ] or a ,
 				nextValidToken();
-				
-				if ( _token.type == JSONTokenType.RIGHT_BRACKET )
+
+				if ( token.type == JSONTokenType.RIGHT_BRACKET )
 				{
 					// we're done reading the array, so return it
 					return a;
 				}
-				else if ( _token.type == JSONTokenType.COMMA )
+				else if ( token.type == JSONTokenType.COMMA )
 				{
 					// move past the comma and read another value
 					nextToken();
 
 					// Allow arrays to have a comma after the last element
 					// if the decoder is not in strict mode
-					if ( !_strict )
+					if ( !strict )
 					{
 						checkValidToken();
 
 						// Reached ",]" as the end of the array, so return it
-						if ( _token.type == JSONTokenType.RIGHT_BRACKET )
+						if ( token.type == JSONTokenType.RIGHT_BRACKET )
 						{
 							return a;
 						}
@@ -225,70 +194,68 @@ package com.hexagonstar.util.json
 				}
 				else
 				{
-					_tokenizer.parseError("Expecting ] or , but found " + _token.value);
+					tokenizer.parseError("Expecting ] or , but found " + token.value);
 				}
 			}
-			
+
 			return null;
 		}
-		
-		
+
+
 		/**
 		 * Attempt to parse an object.
-		 * 
-		 * @private
 		 */
 		private final function parseObject():Object
 		{
-			/* create the object internally that we're going to attempt to parse from the tokenizer. */
-			var o:Object = {};
-			
-			/* store the string part of an object member so that we can assign it a value in the object */
+			// create the object internally that we're going to
+			// attempt to parse from the tokenizer
+			var o:Object = new Object();
+
+			// store the string part of an object member so
+			// that we can assign it a value in the object
 			var key:String;
-			
-			/* grab the next token from the tokenizer */
+
+			// grab the next token from the tokenizer
 			nextValidToken();
-			
-			/* check to see if we have an empty object */
-			if (_token.type == JSONTokenType.RIGHT_BRACE)
+
+			// check to see if we have an empty object
+			if ( token.type == JSONTokenType.RIGHT_BRACE )
 			{
 				// we're done reading the object, so return it
 				return o;
 			}
-			
 			// in non-strict mode an empty object is also a comma
 			// followed by a right bracket
-			else if (!_strict && _token.type == JSONTokenType.COMMA)
+			else if ( !strict && token.type == JSONTokenType.COMMA )
 			{
 				// move past the comma
 				nextValidToken();
 
 				// check to see if we're reached the end of the object
-				if (_token.type == JSONTokenType.RIGHT_BRACE)
+				if ( token.type == JSONTokenType.RIGHT_BRACE )
 				{
 					return o;
 				}
 				else
 				{
-					_tokenizer.parseError("Leading commas are not supported.  Expecting '}' but found " + _token.value);
+					tokenizer.parseError("Leading commas are not supported.  Expecting '}' but found " + token.value);
 				}
 			}
-			
+
 			// deal with members of the object, and use an "infinite"
 			// loop because we could have any amount of members
-			while (true)
+			while ( true )
 			{
-				if (_token.type == JSONTokenType.STRING)
+				if ( token.type == JSONTokenType.STRING )
 				{
 					// the string value we read is the key for the object
-					key = String(_token.value);
-					HLog.trace(key);
-					
+					key = String(token.value);
+
 					// move past the string to see what's next
 					nextValidToken();
-					
+
 					// after the string there should be a :
-					if ( _token.type == JSONTokenType.COLON )
+					if ( token.type == JSONTokenType.COLON )
 					{
 						// move past the : and read/assign a value for the key
 						nextToken();
@@ -298,24 +265,24 @@ package com.hexagonstar.util.json
 						nextValidToken();
 
 						// after the value there's either a } or a ,
-						if ( _token.type == JSONTokenType.RIGHT_BRACE )
+						if ( token.type == JSONTokenType.RIGHT_BRACE )
 						{
 							// we're done reading the object, so return it
 							return o;
 						}
-						else if ( _token.type == JSONTokenType.COMMA )
+						else if ( token.type == JSONTokenType.COMMA )
 						{
 							// skip past the comma and read another member
 							nextToken();
 
 							// Allow objects to have a comma after the last member
 							// if the decoder is not in strict mode
-							if ( !_strict )
+							if ( !strict )
 							{
 								checkValidToken();
 
 								// Reached ",}" as the end of the object, so return it
-								if ( _token.type == JSONTokenType.RIGHT_BRACE )
+								if ( token.type == JSONTokenType.RIGHT_BRACE )
 								{
 									return o;
 								}
@@ -323,33 +290,31 @@ package com.hexagonstar.util.json
 						}
 						else
 						{
-							_tokenizer.parseError("Expecting } or , but found " + _token.value);
+							tokenizer.parseError("Expecting } or , but found " + token.value);
 						}
 					}
 					else
 					{
-						_tokenizer.parseError("Expecting : but found " + _token.value);
+						tokenizer.parseError("Expecting : but found " + token.value);
 					}
 				}
 				else
 				{
-					_tokenizer.parseError("Expecting string but found " + _token.value);
+					tokenizer.parseError("Expecting string but found " + token.value);
 				}
 			}
 			return null;
 		}
-		
-		
+
+
 		/**
-		 * Attempt to parse a value.
-		 * 
-		 * @private
+		 * Attempt to parse a value
 		 */
 		private final function parseValue():Object
 		{
 			checkValidToken();
-			
-			switch ( _token.type )
+
+			switch ( token.type )
 			{
 				case JSONTokenType.LEFT_BRACE:
 					return parseObject();
@@ -360,20 +325,20 @@ package com.hexagonstar.util.json
 				case JSONTokenType.TRUE:
 				case JSONTokenType.FALSE:
 				case JSONTokenType.NULL:
-					return _token.value;
+					return token.value;
 				case JSONTokenType.NAN:
-					if ( !_strict )
+					if ( !strict )
 					{
-						return _token.value;
+						return token.value;
 					}
 					else
 					{
-						_tokenizer.parseError("Unexpected " + _token.value);
+						tokenizer.parseError("Unexpected " + token.value);
 					}
 				default:
-					_tokenizer.parseError("Unexpected " + _token.value);
+					tokenizer.parseError("Unexpected " + token.value);
 			}
-			
+
 			return null;
 		}
 	}

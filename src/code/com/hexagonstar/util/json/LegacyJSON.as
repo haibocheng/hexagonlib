@@ -39,24 +39,20 @@ package com.hexagonstar.util.json
 	 *		var myObject:Object = JSON.decode( jsonString );
 	 *	</code>
 	 */
-	public class LegacyJSON
+	public final class LegacyJSON
 	{
-		// -----------------------------------------------------------------------------------------
-		// Public Methods
-		// -----------------------------------------------------------------------------------------
-		
 		/**
-		 * Encodes an object into a JSON string.
+		 * Encodes a object into a JSON string.
 		 *
 		 * @param o The object to create a JSON string for
 		 * @return the JSON string representing o
 		 */
-		public static function encode(object:Object):String
+		public static function encode(o:Object):String
 		{
-			return new JSONEncoder(object).string;
+			return new JSONEncoder(o).getString();
 		}
-		
-		
+
+
 		/**
 		 * Decodes a JSON string into a native object.
 		 *
@@ -67,10 +63,11 @@ package com.hexagonstar.util.json
 		 * 		Pass <code>false</code> to allow for non-properly-formatted JSON
 		 * 		strings to be decoded with more leniancy.
 		 * @return A native object as specified by s
+		 * @throw JSONParseError
 		 */
-		public static function decode(string:String, strict:Boolean = true):*
+		public static function decode(s:String, strict:Boolean = true):*
 		{
-			return new JSONDecoder(string, strict).object;
+			return new JSONDecoder(s, strict).getValue();
 		}
 	}
 }

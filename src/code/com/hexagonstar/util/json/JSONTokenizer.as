@@ -29,58 +29,44 @@ package com.hexagonstar.util.json
 {
 	public class JSONTokenizer
 	{
-		//-----------------------------------------------------------------------------------------
-		// Properties
-		//-----------------------------------------------------------------------------------------
-		
 		/**
 		 * Flag indicating if the tokenizer should only recognize
 		 * standard JSON tokens.  Setting to <code>false</code> allows
 		 * tokens such as NaN and allows numbers to be formatted as
 		 * hex, etc.
 		 */
-		private var _strict:Boolean;
-		
+		private var strict:Boolean;
 		/** The JSON string to be parsed */
-		private var _string:String;
-		
+		private var jsonString:String;
 		/** The current parsing location in the JSON string */
-		private var _loc:int;
-		
+		private var loc:int;
 		/** The current character in the JSON string during parsing */
-		private var _ch:String;
-		
+		private var ch:String;
 		/**
 		 * The regular expression used to make sure the string does not
 		 * contain invalid control characters.
 		 */
-		private const CONTROL_CHARS_REGEXP:RegExp = /[\x00-\x1F]/;
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Constructor
-		//-----------------------------------------------------------------------------------------
-		
+		private const controlCharsRegExp:RegExp = /[\x00-\x1F]/;
+
+
 		/**
-		 * Constructs a new JSONDecoder to parse a JSON string into a native object.
+		 * Constructs a new JSONDecoder to parse a JSON string
+		 * into a native object.
 		 *
-		 * @param s The JSON string to be converted into a native object.
+		 * @param s The JSON string to be converted
+		 *		into a native object
 		 */
 		public function JSONTokenizer(s:String, strict:Boolean)
 		{
-			_string = s;
-			this._strict = strict;
-			_loc = 0;
+			jsonString = s;
+			this.strict = strict;
+			loc = 0;
 
 			// prime the pump by getting the first character
 			nextChar();
 		}
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Public Methods
-		//-----------------------------------------------------------------------------------------
-		
+
+
 		/**
 		 * Gets the next token in the input sting and advances
 		 * the character to the next character after the token
@@ -94,30 +80,30 @@ package com.hexagonstar.util.json
 			skipIgnored();
 
 			// examine the new character and see what we have...
-			switch ( _ch )
+			switch ( ch )
 			{
 				case '{':
-					token = JSONToken.create(JSONTokenType.LEFT_BRACE, _ch);
+					token = JSONToken.create(JSONTokenType.LEFT_BRACE, ch);
 					nextChar();
 					break;
 				case '}':
-					token = JSONToken.create(JSONTokenType.RIGHT_BRACE, _ch);
+					token = JSONToken.create(JSONTokenType.RIGHT_BRACE, ch);
 					nextChar();
 					break;
 				case '[':
-					token = JSONToken.create(JSONTokenType.LEFT_BRACKET, _ch);
+					token = JSONToken.create(JSONTokenType.LEFT_BRACKET, ch);
 					nextChar();
 					break;
 				case ']':
-					token = JSONToken.create(JSONTokenType.RIGHT_BRACKET, _ch);
+					token = JSONToken.create(JSONTokenType.RIGHT_BRACKET, ch);
 					nextChar();
 					break;
 				case ',':
-					token = JSONToken.create(JSONTokenType.COMMA, _ch);
+					token = JSONToken.create(JSONTokenType.COMMA, ch);
 					nextChar();
 					break;
 				case ':':
-					token = JSONToken.create(JSONTokenType.COLON, _ch);
+					token = JSONToken.create(JSONTokenType.COLON, ch);
 					nextChar();
 					break;
 				case 't':
@@ -178,11 +164,11 @@ package com.hexagonstar.util.json
 					break;
 				default:
 					// see if we can read a number
-					if ( isDigit(_ch) || _ch == '-' )
+					if ( isDigit(ch) || ch == '-' )
 					{
 						token = readNumber();
 					}
-					else if ( _ch == '' )
+					else if ( ch == '' )
 					{
 						// check for reading past the end of the string
 						token = null;
@@ -191,14 +177,81 @@ package com.hexagonstar.util.json
 					{
 						// not sure what was in the input string - it's not
 						// anything we expected
-						parseError("Unexpected " + _ch + " encountered");
+						parseError("Unexpected " + ch + " encountered");
 					}
 			}
 
 			return token;
 		}
-		
-		
+
+
+		/**
+		 * Attempts to read a string from the input string.  Places
+		 * the character location at the first character after the
+		 * string.  It is assumed that ch is " before this method is called.
+		 *
+		 * @return the JSONToken with the string value if a string could
+		 *		be read.  Throws an error otherwise.
+		 */
+		private final function readString():JSONToken
+		{
+			// Rather than examine the string character-by-character, it's
+			// faster to use indexOf to try to and find the closing quote character
+			// and then replace escape sequences after the fact.
+
+			// Start at the current input stream position
+			var quoteIndex:int = loc;
+			do
+			{
+				// Find the next quote in the input stream
+				quoteIndex = jsonString.indexOf("\"", quoteIndex);
+
+				if ( quoteIndex >= 0 )
+				{
+					// We found the next double quote character in the string, but we need
+					// to make sure it is not part of an escape sequence.
+
+					// Keep looping backwards while the previous character is a backslash
+					var backspaceCount:int = 0;
+					var backspaceIndex:int = quoteIndex - 1;
+					while ( jsonString.charAt(backspaceIndex) == "\\" )
+					{
+						backspaceCount++;
+						backspaceIndex--;
+					}
+
+					// If we have an even number of backslashes, that means this is the ending quote
+					if ( ( backspaceCount & 1 ) == 0 )
+					{
+						break;
+					}
+
+					// At this point, the quote was determined to be part of an escape sequence
+					// so we need to move past the quote index to look for the next one
+					quoteIndex++;
+				}
+				else // There are no more quotes in the string and we haven't found the end yet
+				{
+					parseError("Unterminated string literal");
+				}
+			}
+			while ( true );
+
+			// Unescape the string
+			// the token for the string we'll try to read
+			var token:JSONToken = JSONToken.create(JSONTokenType.STRING,
+			// Attach resulting string to the token to return it 
+			unescapeString(jsonString.substr(loc, quoteIndex - loc)));
+
+			// Move past the closing quote in the input string.  This updates the next
+			// character in the input stream to be the character one after the closing quote
+			loc = quoteIndex + 1;
+			nextChar();
+
+			return token;
+		}
+
+
 		/**
 		 * Convert all JavaScript escape characters into normal characters
 		 *
@@ -209,7 +262,7 @@ package com.hexagonstar.util.json
 		{
 			// Issue #104 - If the string contains any unescaped control characters, this
 			// is an error in strict mode
-			if (_strict && CONTROL_CHARS_REGEXP.test(input))
+			if ( strict && controlCharsRegExp.test(input) )
 			{
 				parseError("String contains unescaped control character (0x00-0x1F)");
 			}
@@ -316,78 +369,8 @@ package com.hexagonstar.util.json
 
 			return result;
 		}
-		
-		
-		//-----------------------------------------------------------------------------------------
-		// Private Methods
-		//-----------------------------------------------------------------------------------------
-		
-		/**
-		 * Attempts to read a string from the input string.  Places
-		 * the character location at the first character after the
-		 * string.  It is assumed that ch is " before this method is called.
-		 *
-		 * @return the JSONToken with the string value if a string could
-		 *		be read.  Throws an error otherwise.
-		 */
-		private final function readString():JSONToken
-		{
-			// Rather than examine the string character-by-character, it's
-			// faster to use indexOf to try to and find the closing quote character
-			// and then replace escape sequences after the fact.
 
-			// Start at the current input stream position
-			var quoteIndex:int = _loc;
-			do
-			{
-				// Find the next quote in the input stream
-				quoteIndex = _string.indexOf("\"", quoteIndex);
 
-				if ( quoteIndex >= 0 )
-				{
-					// We found the next double quote character in the string, but we need
-					// to make sure it is not part of an escape sequence.
-
-					// Keep looping backwards while the previous character is a backslash
-					var backspaceCount:int = 0;
-					var backspaceIndex:int = quoteIndex - 1;
-					while ( _string.charAt(backspaceIndex) == "\\" )
-					{
-						backspaceCount++;
-						backspaceIndex--;
-					}
-
-					// If we have an even number of backslashes, that means this is the ending quote
-					if ( ( backspaceCount & 1 ) == 0 )
-					{
-						break;
-					}
-
-					// At this point, the quote was determined to be part of an escape sequence
-					// so we need to move past the quote index to look for the next one
-					quoteIndex++;
-				}
-				else // There are no more quotes in the string and we haven't found the end yet
-				{
-					parseError("Unterminated string literal");
-				}
-			}
-			while ( true );
-
-			// Unescape the string
-			// the token for the string we'll try to read
-			var token:JSONToken = JSONToken.create(JSONTokenType.STRING);
-			// Attach resulting string to the token to return it unescapeString(jsonString.substr(loc, quoteIndex - loc)));
-
-			// Move past the closing quote in the input string.  This updates the next
-			// character in the input stream to be the character one after the closing quote
-			_loc = quoteIndex + 1;
-			nextChar();
-
-			return token;
-		}
-		
-		
 		/**
 		 * Attempts to read a number from the input string.  Places
 		 * the character location at the first character after the
@@ -403,43 +386,43 @@ package com.hexagonstar.util.json
 			var input:String = "";
 
 			// check for a negative number
-			if ( _ch == '-' )
+			if ( ch == '-' )
 			{
 				input += '-';
 				nextChar();
 			}
 
 			// the number must start with a digit
-			if ( !isDigit(_ch) )
+			if ( !isDigit(ch) )
 			{
 				parseError("Expecting a digit");
 			}
 
 			// 0 can only be the first digit if it
 			// is followed by a decimal point
-			if ( _ch == '0' )
+			if ( ch == '0' )
 			{
-				input += _ch;
+				input += ch;
 				nextChar();
 
 				// make sure no other digits come after 0
-				if ( isDigit(_ch) )
+				if ( isDigit(ch) )
 				{
 					parseError("A digit cannot immediately follow 0");
 				}
 				// unless we have 0x which starts a hex number, but this
 				// doesn't match JSON spec so check for not strict mode.
-				else if ( !_strict && _ch == 'x' )
+				else if ( !strict && ch == 'x' )
 				{
 					// include the x in the input
-					input += _ch;
+					input += ch;
 					nextChar();
 
 					// need at least one hex digit after 0x to
 					// be valid
-					if ( isHexDigit(_ch) )
+					if ( isHexDigit(ch) )
 					{
-						input += _ch;
+						input += ch;
 						nextChar();
 					}
 					else
@@ -448,9 +431,9 @@ package com.hexagonstar.util.json
 					}
 
 					// consume all of the hex values
-					while ( isHexDigit(_ch) )
+					while ( isHexDigit(ch) )
 					{
-						input += _ch;
+						input += ch;
 						nextChar();
 					}
 				}
@@ -458,56 +441,56 @@ package com.hexagonstar.util.json
 			else
 			{
 				// read numbers while we can
-				while ( isDigit(_ch) )
+				while ( isDigit(ch) )
 				{
-					input += _ch;
+					input += ch;
 					nextChar();
 				}
 			}
 
 			// check for a decimal value
-			if ( _ch == '.' )
+			if ( ch == '.' )
 			{
 				input += '.';
 				nextChar();
 
 				// after the decimal there has to be a digit
-				if ( !isDigit(_ch) )
+				if ( !isDigit(ch) )
 				{
 					parseError("Expecting a digit");
 				}
 
 				// read more numbers to get the decimal value
-				while ( isDigit(_ch) )
+				while ( isDigit(ch) )
 				{
-					input += _ch;
+					input += ch;
 					nextChar();
 				}
 			}
 
 			// check for scientific notation
-			if ( _ch == 'e' || _ch == 'E' )
+			if ( ch == 'e' || ch == 'E' )
 			{
 				input += "e";
 				nextChar();
 				// check for sign
-				if ( _ch == '+' || _ch == '-' )
+				if ( ch == '+' || ch == '-' )
 				{
-					input += _ch;
+					input += ch;
 					nextChar();
 				}
 
 				// require at least one number for the exponent
 				// in this case
-				if ( !isDigit(_ch) )
+				if ( !isDigit(ch) )
 				{
 					parseError("Scientific notation number needs exponent value");
 				}
 
 				// read in the exponent
-				while ( isDigit(_ch) )
+				while ( isDigit(ch) )
 				{
-					input += _ch;
+					input += ch;
 					nextChar();
 				}
 			}
@@ -538,7 +521,7 @@ package com.hexagonstar.util.json
 		 */
 		private final function nextChar():String
 		{
-			return _ch = _string.charAt(_loc++);
+			return ch = jsonString.charAt(loc++);
 		}
 
 
@@ -554,11 +537,11 @@ package com.hexagonstar.util.json
 			// as we keep advancing past the original location
 			do
 			{
-				originalLoc = _loc;
+				originalLoc = loc;
 				skipWhite();
 				skipComments();
 			}
-			while ( originalLoc != _loc );
+			while ( originalLoc != loc );
 		}
 
 
@@ -569,11 +552,11 @@ package com.hexagonstar.util.json
 		 */
 		private function skipComments():void
 		{
-			if ( _ch == '/' )
+			if ( ch == '/' )
 			{
 				// Advance past the first / to find out what type of comment
 				nextChar();
-				switch ( _ch )
+				switch ( ch )
 				{
 					case '/':
 						// single-line comment, read through end of line
@@ -583,7 +566,7 @@ package com.hexagonstar.util.json
 						{
 							nextChar();
 						}
-						while ( _ch != '\n' && _ch != '' );
+						while ( ch != '\n' && ch != '' );
 						// move past the \n
 						nextChar();
 						break;
@@ -594,11 +577,11 @@ package com.hexagonstar.util.json
 						// try to find a trailing */
 						while ( true )
 						{
-							if ( _ch == '*' )
+							if ( ch == '*' )
 							{
 								// check to see if we have a closing /
 								nextChar();
-								if ( _ch == '/' )
+								if ( ch == '/' )
 								{
 									// move past the end of the closing */
 									nextChar();
@@ -613,7 +596,7 @@ package com.hexagonstar.util.json
 
 							// when we're here we've read past the end of
 							// the string without finding a closing */, so error
-							if ( _ch == '' )
+							if ( ch == '' )
 							{
 								parseError("Multi-line comment not closed");
 							}
@@ -621,7 +604,7 @@ package com.hexagonstar.util.json
 						break;
 					// Can't match a comment after a /, so it's a parsing error
 					default:
-						parseError("Unexpected " + _ch + " encountered (expecting '/' or '*' )");
+						parseError("Unexpected " + ch + " encountered (expecting '/' or '*' )");
 				}
 			}
 		}
@@ -637,7 +620,7 @@ package com.hexagonstar.util.json
 			// As long as there are spaces in the input
 			// stream, advance the current location pointer
 			// past them
-			while ( isWhiteSpace(_ch) )
+			while ( isWhiteSpace(ch) )
 			{
 				nextChar();
 			}
@@ -658,7 +641,7 @@ package com.hexagonstar.util.json
 				return true;
 			}
 			// If we're not in strict mode, we also accept non-breaking space
-			else if ( !_strict && ch.charCodeAt(0) == 160 )
+			else if ( !strict && ch.charCodeAt(0) == 160 )
 			{
 				return true;
 			}
@@ -697,7 +680,7 @@ package com.hexagonstar.util.json
 		 */
 		public final function parseError(message:String):void
 		{
-			throw new JSONParseError(message, _loc, _string);
+			throw new JSONParseError(message, loc, jsonString);
 		}
 	}
 }
