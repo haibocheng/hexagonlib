@@ -149,7 +149,7 @@ package com.hexagonstar
 				output="${path.bin}/swc/${swc.targetname}"
 				target-player="${fpv.version}"
 				debug="false"
-				optimize="true"
+				optimize="false"
 				strict="true">
 				<load-config filename="${path.cfg.air}"/>
 				<source-path path-element="${path.src}"/>
